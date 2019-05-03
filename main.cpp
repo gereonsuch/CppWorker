@@ -1,35 +1,40 @@
 #include <iostream>
 
-#include "threadfifoqueue.h"
+#include "processingunit.h"
 
 #include <thread>
 #include <time.h>
 #include <cstdlib>
 #include <iostream>
 
+std::mutex m;
 
-gs::ThreadFIFOQueue<int> q;
+void output(std::vector<double> vals){
+    std::lock_guard<std::mutex> lock(m);
+    double sum=0.0;
+    for (double v: vals) sum+=v;
+    std::cout << sum << std::endl;
+}
 
-
-void putrand(int num=10){
-    for(int k=0;k<num;k++)
-        q.push(k);//rand()%100);
+std::vector<double> randvec(size_t n){
+    std::vector<double> v;
+    v.reserve(n);
+    for (size_t i=0;i<n;i++) v.push_back( (double)(rand() % 1000)/1000.0 );
+    return v;
 }
 
 int main()
 {
-    srand (time(NULL));
+    gs::BaseProcessingUnit< std::vector<double> > *proc=new gs::BaseProcessingUnit< std::vector<double> >(output);
 
-    std::thread t(putrand,10);
+    std::thread w(std::bind(&gs::BaseProcessingUnit< std::vector<double> >::process, proc));
 
-    for(int i=0;i<10;i++) {
-        std::cout << "get: " << q.pop() << std::endl;
-    }
+    for(size_t i=0;i<10;i++)
+        proc->push(randvec(100), i==9);
 
-    t.join();
+    w.join();
 
-
-
+    std::cout << "finished" << std::endl;
 
     return 0;
 }
