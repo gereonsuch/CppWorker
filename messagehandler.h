@@ -31,7 +31,6 @@
 
 namespace gs {
 
-template<typename inT>
 class MessageHandler : virtual public gr::sync_block{
     std::map<std::string, ProcessingUnit<pmt::pmt_t>* > d_processing_units;
 
@@ -49,7 +48,8 @@ public:
         d_msgout(pmt::intern("msgout"))
     {
         //register in and out ports and bind the handle_input method to all incoming inputs.
-        message_port_register_in(d_msgin, std::bind(&MessageHandler<inT>::handle_input, this, _1));
+        message_port_register_in(d_msgin);
+        set_msg_handler(d_msgin, std::bind(&MessageHandler::handle_input, this, _1));
         message_port_register_out(d_msgout);
     }
 
@@ -83,16 +83,16 @@ protected:
          *
          * DO NOT FORGET TO PASS EMIT FUNCTION!
          *
-         * Defaults to: return new ProcessingUnit<pmt::pmt_t>(std::bind(&MessageHandler<inT>::emit_msg, this, _1));
+         * Defaults to: return new ProcessingUnit<pmt::pmt_t>( [this](pmt::pmt_t m){ this->emit_msg(m); } );
          */
 
-        return new ProcessingUnit<pmt::pmt_t>(std::bind(&MessageHandler<inT>::emit_msg, this, _1));
+        return new ProcessingUnit<pmt::pmt_t>( [this](pmt::pmt_t m){ this->emit_msg(m); } );
     }
 
     void handle_input(pmt::pmt_t msg){
         /** \brief Input method for all messages.
          *
-         * Distributes all messages on seperate Processing units based on the messages ID. .
+         * Distributes all messages on seperate Processing units based on the messages ID.
          * If no ProcessingUnit is found, a new one is created.
          */
 
@@ -120,6 +120,11 @@ protected:
 
         //add data to the processing unit.
         i->second->push(msg, finished);
+
+        /* if finished flag is set, the pointer to the processing unit can be erased, since the object
+         * deletes itself after completion of all messages in the queue(defaults to suicidal behaviour). */
+        if(finished)
+            d_processing_units.erase(i);
     }
 
 };
