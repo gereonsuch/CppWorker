@@ -189,6 +189,8 @@ protected:
 template <typename packetT, typename sampT>
 class BufferedProcessingUnit : public BaseProcessingUnit<packetT>
 {
+    using BaseProcessingUnit<packetT>::BaseProcessingUnit; //inherit constructors
+
 protected:
     std::vector<sampT> d_inbuffer;
 
