@@ -28,6 +28,7 @@
 #define PROCESSINGUNIT_H
 
 #include <functional>
+#include <thread>
 #include <mutex>
 #include <vector>
 #include "threadfifoqueue.h"
@@ -40,9 +41,11 @@ namespace gs {
  * \brief Interface to process incoming data threadsafe
  *
  * Baseclass for a parallelized data processing. This units
- * process method is called in a seperate thread and manages
- * reading the data from a thread safe queue and emission
- * via a bound external function.
+ * process method is called in a seperate thread AUTOMATICALLY
+ * when the constructor is called and manages reading the
+ * data from a thread safe queue and emission via a bound
+ * external function. By default, the thread and the object
+ * itself are deleted.
  *
  * \author Gereon Such
  *
@@ -68,6 +71,9 @@ public:
          *
          * @param[in] emission_func Link to the function, which is called after procession of a data block.
          */
+
+        std::thread t(&BaseProcessingUnit<T>::process, this);
+        t.detach();
     }
 
     void set_finished() {
@@ -120,25 +126,36 @@ public:
         return true;
     }
 
-    virtual void process() {
-        /** \brief Processing method which should be placed in a seperate thread.
+protected:
+    void process() {
+        /** \brief Processing method which is called on construction and placed in another thread.
          *
          * Waits for data on input queue, which can be added via push method.
-         * Until finished flag is set,
+         * Until finished flag is set, more items are awaited.
+         * If suicidal flag is set, process deletes the ProcessungUnit object
+         * on completion.
          */
 
         while(!finished() || d_queue.size()){
+            try{
+                T val=d_queue.pop();
 
-            T val=d_queue.pop();
-
-            d_emit( this->work(val) );
-
+                d_emit( this->work(val) );
+            }catch(std::exception &e){
+                this->handle_exception(e);
+            }
         }
 
         if(d_suicidal) delete this; //delete object on end of processing.
     }
 
-protected:
+    virtual void handle_exception(std::exception &e){
+        /** \brief Virtual handle_exception method, by default, ignores the error.
+         *
+         * Overload this to handle errors.
+         */
+    }
+
     virtual T work(T input){
         /** \brief Virtual work method, which processes the input and returns the output.
          *

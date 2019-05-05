@@ -3,6 +3,7 @@
 #include "processingunit.h"
 
 #include <thread>
+#include <chrono>
 #include <time.h>
 #include <cstdlib>
 #include <iostream>
@@ -27,12 +28,10 @@ int main()
 {
     gs::BaseProcessingUnit< std::vector<double> > *proc=new gs::BaseProcessingUnit< std::vector<double> >(output);
 
-    std::thread w(std::bind(&gs::BaseProcessingUnit< std::vector<double> >::process, proc));
-
     for(size_t i=0;i<10;i++)
         proc->push(randvec(100), i==9);
 
-    w.join();
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     std::cout << "finished" << std::endl;
 
