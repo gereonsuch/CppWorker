@@ -36,7 +36,7 @@
 namespace gs {
 
 /**
- * \class BaseProcessingUnit
+ * \class ProcessingUnit
  *
  * \brief Interface to process incoming data threadsafe
  *
@@ -53,7 +53,7 @@ namespace gs {
  */
 
 template <typename T>
-class BaseProcessingUnit //all methods are implemented in class, thus are implicitly inline, thus class is inline
+class ProcessingUnit //all methods are implemented in class, thus are implicitly inline, thus class is inline
 {
     std::mutex d_controllock;
     ThreadFIFOQueue<T> d_queue;
@@ -62,7 +62,7 @@ class BaseProcessingUnit //all methods are implemented in class, thus are implic
     bool d_suicidal; //if true, object deletes itself after process method finished.
 
 public:
-    BaseProcessingUnit(std::function<void(T)> emission_func) :
+    ProcessingUnit(std::function<void(T)> emission_func) :
         d_emit(emission_func),
         d_finished(false),
         d_suicidal(true)
@@ -72,7 +72,7 @@ public:
          * @param[in] emission_func Link to the function, which is called after procession of a data block.
          */
 
-        std::thread t(&BaseProcessingUnit<T>::process, this);
+        std::thread t(&ProcessingUnit<T>::process, this);
         t.detach();
     }
 
@@ -175,7 +175,7 @@ protected:
  * \brief Interface to process incoming data with integrated buffering.
  *
  * Baseclass for a parallelized data processing. This object implements
- * the same interface as BaseProcessingUnit, but has additional internal
+ * the same interface as ProcessingUnit, but has additional internal
  * interface for the work method to transfer samples from one work
  * iteration to the next. Direct access to d_inbuffer is granted in
  * work methods.
@@ -187,9 +187,9 @@ protected:
 
 
 template <typename packetT, typename sampT>
-class BufferedProcessingUnit : public BaseProcessingUnit<packetT>
+class BufferedProcessingUnit : public ProcessingUnit<packetT>
 {
-    using BaseProcessingUnit<packetT>::BaseProcessingUnit; //inherit constructors
+    using ProcessingUnit<packetT>::ProcessingUnit; //inherit constructors
 
 protected:
     std::vector<sampT> d_inbuffer;

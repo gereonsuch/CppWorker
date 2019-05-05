@@ -26,7 +26,7 @@ std::vector<double> randvec(size_t n){
 
 int main()
 {
-    gs::BaseProcessingUnit< std::vector<double> > *proc=new gs::BaseProcessingUnit< std::vector<double> >(output);
+    gs::ProcessingUnit< std::vector<double> > *proc=new gs::ProcessingUnit< std::vector<double> >(output);
 
     for(size_t i=0;i<10;i++)
         proc->push(randvec(100), i==9);
