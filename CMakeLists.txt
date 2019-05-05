@@ -11,6 +11,10 @@ add_library(threadfifoqueue.h INTERFACE) #only to make it visible in the project
 
 add_library(PMTTools pmttools.cpp)
 
+
+#needed to link against gr sync_block
+set(GR_REQUIRED_COMPONENTS RUNTIME)
+find_package(Gnuradio "3.7.2" REQUIRED)
 add_library(messagehandler.h INTERFACE) #only to make it visible in the project. ThreadFIFOQueue is header only implemented.
 
 
