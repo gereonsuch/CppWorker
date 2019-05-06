@@ -57,9 +57,10 @@ class ProcessingUnit //all methods are implemented in class, thus are implicitly
 {
     std::mutex d_controllock;
     ThreadFIFOQueue<T> d_queue;
-    std::function<void(T)> d_emit;
     bool d_finished;
     bool d_suicidal; //if true, object deletes itself after process method finished.
+protected:
+    std::function<void(T)> d_emit;
 
 public:
     ProcessingUnit(std::function<void(T)> emission_func) :
@@ -138,9 +139,7 @@ protected:
 
         while(!finished() || d_queue.size()){
             try{
-                T val=d_queue.pop();
-
-                d_emit( this->work(val) );
+                this->work( d_queue.pop() );
             }catch(std::exception &e){
                 this->handle_exception(e);
             }
@@ -156,13 +155,13 @@ protected:
          */
     }
 
-    virtual T work(T input){
+    virtual void work(T input){
         /** \brief Virtual work method, which processes the input and returns the output.
          *
-         * Overload this method for processing.
+         * Overload this method for processing. Don't forget to d_emit your data.
          */
 
-        return input;
+        d_emit( input );
     }
 
 };
