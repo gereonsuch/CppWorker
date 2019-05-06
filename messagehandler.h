@@ -31,7 +31,7 @@
 
 namespace gs {
 
-class MessageHandler : virtual public gr::sync_block{
+class MessageHandler : public gr::sync_block{
     std::map<std::string, ProcessingUnit<pmt::pmt_t>* > d_processing_units;
 
     pmt::pmt_t d_msgin;
@@ -126,6 +126,9 @@ protected:
         if(finished)
             d_processing_units.erase(i);
     }
+
+private:
+    int work(int noutput_items, gr_vector_const_void_star &input_items, gr_vector_void_star &output_items) {return 0;} //must be implemented to avoid abstract class.
 
 };
 
